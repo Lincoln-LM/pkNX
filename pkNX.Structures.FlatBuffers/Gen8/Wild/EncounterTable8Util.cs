@@ -305,7 +305,7 @@ namespace pkNX.Structures.FlatBuffers
 
         private static IEnumerable<string> GetLines(IReadOnlyList<EncounterSlot8> arr, IReadOnlyList<string> species)
         {
-            foreach (var slot in arr.OrderByDescending(sl => sl.Probability))
+            foreach (var slot in arr)
             {
                 if (slot.Species == 0)
                     continue;
