@@ -305,13 +305,17 @@ namespace pkNX.Structures.FlatBuffers
 
         private static IEnumerable<string> GetLines(IReadOnlyList<EncounterSlot8> arr, IReadOnlyList<string> species)
         {
+            var count = 0;
             foreach (var slot in arr)
             {
                 if (slot.Species == 0)
                     continue;
                 string form = slot.Form == 0 ? string.Empty : $"-{slot.Form}";
                 var spec_form = $"{species[slot.Species]}{form}";
-                yield return $"- {spec_form,-12}\t{slot.Probability:00}%";
+                var min = count;
+                count += slot.Probability;
+                var max = count-1;
+                yield return $"- {spec_form,-12}\t{min:00}-{max:00}";
             }
 
             yield return string.Empty;
