@@ -12,10 +12,9 @@ using FlatSharp.Attributes;
 namespace pkNX.Structures.FlatBuffers;
 
 [FlatBufferTable, TypeConverter(typeof(ExpandableObjectConverter))]
-public class EventEncount8a
+public class ConfigureTable8a : IFlatBufferArchive<Configure8aEntry>
 {
-    [FlatBufferItem(0)] public string EncounterName { get; set; } = string.Empty;
-    [FlatBufferItem(1)] public string Field_01 { get; set; } = string.Empty;
-    [FlatBufferItem(2)] public int Field_02 { get; set; } // All Entries have empty
-    [FlatBufferItem(3)] public EventEncountPoke8a[] Table { get; set; } = Array.Empty<EventEncountPoke8a>();
+    public byte[] Write() => FlatBufferConverter.SerializeFrom(this);
+
+    [FlatBufferItem(0)] public Configure8aEntry[] Table { get; set; } = Array.Empty<Configure8aEntry>();
 }

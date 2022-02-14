@@ -190,5 +190,30 @@
 
         /// <summary> "PokeMisc" Details about a given Species-Form not stored in <see cref="PersonalStats"/> </summary>
         PokeMisc,
+
+        ThrowableParam,
+        ThrowParam,
+        ThrowableResourceSet,
+        ThrowableResource,
+        ThrowPermissionSet,
+
+        /// <summary> Gives bonus rolls based on met thresholds. </summary>
+        ShinyRolls,
+        WormholeConfig,
+        CaptureConfig,
+        BattleLogicConfig,
+        PlayerConfig,
+        EventFarmConfig,
+        FieldLandmarkConfig,
+        BattleViewConfig,
+        AICommonConfig,
+        FieldSpawnerConfig,
+        OutbreakConfig,
+        EvolutionConfig,
+        BallThrowConfig,
+        SizeScaleConfig,
+
+        AppConfigList,
+        HaShop,
     }
 }
