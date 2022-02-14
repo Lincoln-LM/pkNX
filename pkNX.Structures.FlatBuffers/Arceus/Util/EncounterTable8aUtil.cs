@@ -349,7 +349,7 @@ namespace pkNX.Structures.FlatBuffers
                 string form = slot.Form == 0 ? string.Empty : $"-{slot.Form}";
                 var spec_form = $"{speciesNames[slot.Species]}{form}";
 
-                var summary = $"- rate\t{spec_form,-12}";
+                var summary = $"- {rate}\t{spec_form,-12}";
 
                 var (force, min, max) = slot.GetLevels(lvMin, lvMax);
                 if (slot.Oybn.Oybn1 || slot.Oybn.Oybn2)
