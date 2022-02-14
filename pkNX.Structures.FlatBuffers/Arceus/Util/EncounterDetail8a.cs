@@ -34,7 +34,7 @@ public record struct EncounterDetail8a(double Rate, double MultT, double MultW, 
                 for (var i = 0; i < table[time, weather].Count; i++)
                 {
                     var e = table[time, weather][i];
-                    var effective = (e.Rate / totalRate) * 100.0;
+                    var effective = e.Rate;
                     var detail = new EncounterDetail8a(effective, e.MultT, e.MultW, e.Unk, e.Slot);
                     table[time, weather][i] = detail;
                 }
