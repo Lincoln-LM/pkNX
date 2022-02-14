@@ -29,12 +29,6 @@ namespace pkNX.WinForms
             System.Media.SystemSounds.Asterisk.Play();
         }
 
-        private void B_DumpTrainers_Click(object sender, EventArgs e)
-        {
-            Dumper.DumpTrainers();
-            System.Media.SystemSounds.Asterisk.Play();
-        }
-
         private void B_Wild_Click(object sender, EventArgs e)
         {
             Dumper.DumpWilds();
@@ -117,6 +111,12 @@ namespace pkNX.WinForms
             System.Media.SystemSounds.Asterisk.Play();
         }
 
+        private void B_EventTriggers_Click(object sender, EventArgs e)
+        {
+            Dumper.DumpEventTriggers();
+            System.Media.SystemSounds.Asterisk.Play();
+        }
+
         private void B_GetDex_Click(object sender, EventArgs e)
         {
             Dumper.DumpDex();
@@ -140,13 +140,6 @@ namespace pkNX.WinForms
             Dumper.DumpFlavorText();
             System.Media.SystemSounds.Asterisk.Play();
         }
-
-        private void B_EggMove_Click(object sender, EventArgs e)
-        {
-            Dumper.DumpEggEntries();
-            System.Media.SystemSounds.Asterisk.Play();
-        }
         #endregion
-
     }
 }

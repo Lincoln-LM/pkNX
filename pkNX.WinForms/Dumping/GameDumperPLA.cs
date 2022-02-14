@@ -161,15 +161,15 @@ namespace pkNX.WinForms
                 var pak = new GFPack(f);
                 foreach (var bytes in pak.DecompressedFiles)
                 {
-                    if (AHTB.IsAHTB(bytes))
-                    {
-                        var tbl = new AHTB(bytes);
-                        var summaries = tbl.Summary;
-                        foreach (var t in tbl.ShortSummary)
-                            result.Add(t);
-                        list.Add(Path.GetFileName(f));
-                        list.AddRange(summaries);
-                    }
+                    if (!AHTB.IsAHTB(bytes))
+                        continue;
+
+                    var tbl = new AHTB(bytes);
+                    var summaries = tbl.Summary;
+                    foreach (var t in tbl.ShortSummary)
+                        result.Add(t);
+                    list.Add(Path.GetFileName(f));
+                    list.AddRange(summaries);
                 }
 
                 for (var i = 0; i < pak.HashAbsolute.Length; i++)
@@ -197,74 +197,6 @@ namespace pkNX.WinForms
             File.WriteAllLines(outname, result);
             File.WriteAllLines(outname2, list);
             File.WriteAllLines(outname3, gf);
-        }
-
-        public static Dictionary<ulong, string> ReadAHTB(byte[] bytes)
-        {
-            if (!AHTB.IsAHTB(bytes))
-                throw new ArgumentException();
-
-            var tbl = new AHTB(bytes);
-            return tbl.ToDictionary();
-        }
-
-        private TrainerEditor GetTrainerEditor()
-        {
-            var editor = new TrainerEditor
-            {
-                ReadClass = data => new TrainerClass8(data),
-                ReadPoke = data => new TrainerPoke8(data),
-                ReadTrainer = data => new TrainerData8(data),
-                ReadTeam = TrainerPoke8.ReadTeam,
-                WriteTeam = TrainerPoke8.WriteTeam,
-                TrainerData = ROM.GetFilteredFolder(GameFile.TrainerData),
-                TrainerPoke = ROM.GetFilteredFolder(GameFile.TrainerPoke),
-                TrainerClass = ROM.GetFilteredFolder(GameFile.TrainerClass),
-            };
-            editor.Initialize();
-            return editor;
-        }
-
-        public void DumpTrainers()
-        {
-            var trc = ROM.GetStrings(TextName.TrainerClasses);
-            var trn = ROM.GetStrings(TextName.TrainerNames);
-            var m = ROM.GetStrings(TextName.MoveNames);
-            var s = ROM.GetStrings(TextName.SpeciesNames);
-
-            var tr = GetTrainerEditor();
-            var result = new List<string>();
-            for (int i = 0; i < tr.Length; i++)
-            {
-                var t = tr[i];
-
-                // some battles with Avery and Klara have out of bounds trclasses -- set back to "Pokémon Trainer"
-                if (t.Self.Class > trc.Length)
-                    t.Self.Class = 1;
-
-                result.Add($"{i:000} - {trc[t.Self.Class]}: {trn[i]}");
-                const int MoneyScalar = 80;
-                result.Add($"AI: {t.Self.AI} | Mode: {t.Self.Mode} | Money: {t.Self.Money * MoneyScalar}");
-                result.Add($"Pokémon Count: {t.Self.NumPokemon}");
-
-                result.Add("---");
-                for (int j = 0; j < t.Team.Count; j++)
-                {
-                    IEnumerable<string> moves = t.Team[j].Moves.Where(z => z != 0).Select(z => m[z]).ToArray();
-                    if (!moves.Any()) moves = new[] { "Default Level Up" };
-                    int form = t.Team[j].Form;
-                    var formstr = form != 0 ? $"-{form}" : "";
-                    var str = $"{j + 1}: Lv{t.Team[j].Level:00} {s[t.Team[j].Species]}{formstr} : {string.Join(" / ", moves)}";
-                    result.Add(str);
-                }
-                result.Add("---");
-
-                result.Add("=========");
-                result.Add("");
-            }
-
-            var outname = GetPath("trparse.txt");
-            File.WriteAllLines(outname, result);
         }
 
         public void DumpDrops()
@@ -428,7 +360,7 @@ namespace pkNX.WinForms
             File.WriteAllLines(fn, lines);
 
             var f2 = GetPath("StaticEncountersPKHeX.txt");
-            File.WriteAllLines(f2, statics.Table.SelectMany(z => z.Table?.Select(x => x.Dump(speciesNames, z.EncounterName))).OrderBy(z => z));
+            File.WriteAllLines(f2, statics.Table.SelectMany(z => z.Table.Select(x => x.Dump(speciesNames, z.EncounterName))).OrderBy(z => z));
         }
 
         public void DumpWilds()
@@ -460,6 +392,8 @@ namespace pkNX.WinForms
             var allLandItems = new List<LandmarkItemSpawn8a>();
             var allLandMarks = new List<LandmarkItem8a>();
             var allUnown = new List<PlacementUnnnEntry>();
+            var allMkrg = new List<PlacementMkrgEntry>();
+            var allSearchItem = new List<PlacementSearchItem>();
             foreach (var areaNameList in PLAInfo.AreaNames)
             {
                 var instance = AreaInstance8a.Create(resident, areaNameList);
@@ -490,6 +424,8 @@ namespace pkNX.WinForms
                 allLandItems.AddRange(instance.LandItems);
                 allLandMarks.AddRange(instance.LandMarks);
                 allUnown.AddRange(instance.Unown);
+                allMkrg.AddRange(instance.Mikaruge);
+                allSearchItem.AddRange(instance.SearchItem);
 
                 foreach (var subArea in instance.SubAreas)
                 {
@@ -499,6 +435,9 @@ namespace pkNX.WinForms
                     allLocations.AddRange(subArea.Locations);
                     allLandItems.AddRange(subArea.LandItems);
                     allLandMarks.AddRange(subArea.LandMarks);
+                    allUnown.AddRange(subArea.Unown);
+                    allMkrg.AddRange(subArea.Mikaruge);
+                    allSearchItem.AddRange(subArea.SearchItem);
                 }
             }
 
@@ -518,6 +457,8 @@ namespace pkNX.WinForms
             File.WriteAllText(GetPath(wild, "allLandMarks.csv"), TableUtil.GetTable(allLandMarks));
             File.WriteAllText(GetPath(wild, "allLandMarkSpawns.csv"), TableUtil.GetTable(allLandMarks));
             File.WriteAllText(GetPath(wild, "allUnown.csv"), TableUtil.GetTable(allUnown));
+            File.WriteAllText(GetPath(wild, "allMkrg.csv"), TableUtil.GetTable(allMkrg));
+            File.WriteAllText(GetPath(wild, "allSearchItem.csv"), TableUtil.GetTable(allSearchItem));
         }
 
         public void DumpResident()
@@ -610,6 +551,14 @@ namespace pkNX.WinForms
                         mkrg_all.Add(string.Empty);
                         File.WriteAllLines(GetPath(placement, $"Mikaruge_{areaName}.txt"), mkrg_lines);
                     }
+                    if (subArea.SearchItem.Length != 0)
+                    {
+                        var mkrg_lines = GetSearchItemLines(areaName, map, subArea.SearchItem, subArea.Locations);
+
+                        mkrg_all.AddRange(mkrg_lines);
+                        mkrg_all.Add(string.Empty);
+                        File.WriteAllLines(GetPath(placement, $"SearchItem_{areaName}.txt"), mkrg_lines);
+                    }
 
                     // Debug for Visualization
                     if (new[] { "ha_area01", "ha_area02", "ha_area03", "ha_area04", "ha_area05" }.Contains(areaName))
@@ -684,11 +633,35 @@ namespace pkNX.WinForms
             return result;
         }
 
+        private static IReadOnlyList<string> GetSearchItemLines(string areaName,
+            IReadOnlyDictionary<string, (string Name, int Index)> map,
+            IEnumerable<PlacementSearchItem> mkrgs,
+            IReadOnlyList<PlacementLocation8a> locations)
+        {
+            var result = new List<string> { $"Area: {areaName}" };
+            foreach (var psi in mkrgs)
+            {
+                var contained = GetNearbyLocationNames(psi, locations, map);
+                result.Add($"\t{psi} // Containing Locations: {contained}");
+            }
+            return result;
+        }
+
         private static string GetNearbyLocationNames(PlacementSpawner8a spawner,
             IReadOnlyList<PlacementLocation8a> locations,
             IReadOnlyDictionary<string, (string Name, int Index)> map)
         {
             var containedBy = spawner.GetContainingLocations(locations);
+            var placeNames = containedBy.Select(z => z.PlaceName).Distinct();
+            var localized = placeNames.Select(pn => map[pn].Name);
+            return string.Join(", ", localized);
+        }
+
+        private static string GetNearbyLocationNames(PlacementSearchItem mkrg,
+            IReadOnlyList<PlacementLocation8a> locations,
+            IReadOnlyDictionary<string, (string Name, int Index)> map)
+        {
+            var containedBy = mkrg.GetContainingLocations(locations);
             var placeNames = containedBy.Select(z => z.PlaceName).Distinct();
             var localized = placeNames.Select(pn => map[pn].Name);
             return string.Join(", ", localized);
@@ -792,8 +765,8 @@ namespace pkNX.WinForms
 
             for (var species = 0; species <= 980; species++)
             {
-                var entries = dexResearch.Table.Where(e => e.Species == species);
-                if (!entries.Any())
+                var entries = Array.FindAll(dexResearch.Table, z => z.Species == species);
+                if (entries.Length == 0)
                     continue;
 
                 var dexInd = GetDexIndex(species);
@@ -945,27 +918,6 @@ namespace pkNX.WinForms
             File.WriteAllLines(p3, l3);
         }
 
-        public void DumpEggEntries()
-        {
-        }
-
-        public static byte[] GetDistributionContents(string path, out int index)
-        {
-            var archive = File.ReadAllBytes(path);
-
-            // Validate Header
-            if (archive.Length < 0x20 || archive.Length != 4 + BitConverter.ToInt32(archive, 0x10) || BitConverter.ToInt32(archive, 0x8) != 0x20)
-                throw new ArgumentException();
-
-            index = archive[0];
-
-            // TODO: Eventually validate CRC16 over Data[:-4], CRC stored at Data[-4:]
-
-            var data = new byte[archive.Length - 0x24];
-            Array.Copy(archive, 0x20, data, 0, data.Length);
-            return data;
-        }
-
         private static readonly string[] LanguageCodes = { "ja", "en", "fr", "it", "de", "es", "ko", "zh", "zh2" };
 
         private static readonly string[] LanguageNames =
@@ -1036,6 +988,65 @@ namespace pkNX.WinForms
             var text = FlatDumper.GetTable<ScriptIDRecordRelease, ScriptIDRecord>(file);
             var path = GetPath("scriptCommands.txt");
             File.WriteAllText(path, text);
+        }
+
+        public void DumpEventTriggers()
+        {
+            var eventTriggerDir = Path.Combine(ROM.PathRomFS, "bin", "event", "event_progress", "trigger");
+            var eventTriggerFiles = Directory.EnumerateFiles(eventTriggerDir, "*", SearchOption.AllDirectories).Where(p => Path.GetExtension(p) == ".bin");
+
+
+            const string outFolder = "event_trigger";
+            Directory.CreateDirectory(GetPath(outFolder));
+
+            var unknownTriggers = new List<ulong>();
+            var unknownConditions = new List<ulong>();
+            var unknownCommands = new List<ulong>();
+
+            var allLines = new List<string>();
+
+            foreach (var f in eventTriggerFiles)
+            {
+                if (Path.GetFileName(f) == "trigger_preset.bin")
+                    continue;
+
+                var table = FlatBufferConverter.DeserializeFrom<TriggerTable8a>(f);
+
+                var curLines = new List<string>();
+                curLines.Add($"File: {Path.GetFileName(f)}");
+
+                foreach (var line in Trigger8aUtil.GetTriggerTableSummary(table))
+                    curLines.Add($"\t{line}");
+
+                File.WriteAllLines(GetPath(outFolder, $"trigger_{Path.GetFileNameWithoutExtension(f).Replace("trigger_", string.Empty)}.txt"), curLines);
+
+                allLines.AddRange(curLines);
+                allLines.Add(string.Empty);
+
+                foreach (var trg in table.Table)
+                {
+                    if (!Enum.IsDefined(typeof(TriggerType8a), trg.Meta.TriggerTypeID) && !unknownTriggers.Contains((ulong)trg.Meta.TriggerTypeID))
+                        unknownTriggers.Add((ulong)trg.Meta.TriggerTypeID);
+
+                    foreach (var cond in trg.Conditions)
+                    {
+                        if (!Enum.IsDefined(typeof(ConditionType8a), cond.ConditionTypeID) && !unknownConditions.Contains((ulong)cond.ConditionTypeID))
+                            unknownConditions.Add((ulong)cond.ConditionTypeID);
+                    }
+
+                    foreach (var cmd in trg.Commands)
+                    {
+                        if (!Enum.IsDefined(typeof(TriggerCommandType8a), cmd.CommandTypeID) && !unknownCommands.Contains((ulong)cmd.CommandTypeID))
+                            unknownCommands.Add((ulong)cmd.CommandTypeID);
+                    }
+                }
+            }
+
+            File.WriteAllLines(GetPath(outFolder, "triggerAll.txt"), allLines);
+
+            File.WriteAllLines(GetPath(outFolder, "triggerUnknownTypes.txt"), unknownTriggers.OrderBy(x => x).Select(x => $"0x{x:X16},"));
+            File.WriteAllLines(GetPath(outFolder, "triggerUnknownConditions.txt"), unknownConditions.OrderBy(x => x).Select(x => $"0x{x:X16},"));
+            File.WriteAllLines(GetPath(outFolder, "triggerUnknownCommands.txt"), unknownCommands.OrderBy(x => x).Select(x => $"0x{x:X16},"));
         }
 
         public void DumpMoveShop()

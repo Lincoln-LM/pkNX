@@ -32,7 +32,6 @@
             this.Tab_General = new System.Windows.Forms.TabPage();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.B_ParsePKMDetails = new System.Windows.Forms.Button();
-            this.B_DumpTrainers = new System.Windows.Forms.Button();
             this.B_Wild = new System.Windows.Forms.Button();
             this.B_Static = new System.Windows.Forms.Button();
             this.B_Gift = new System.Windows.Forms.Button();
@@ -51,7 +50,6 @@
             this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
             this.B_DumpHash = new System.Windows.Forms.Button();
             this.B_FlavorText = new System.Windows.Forms.Button();
-            this.B_EggMove = new System.Windows.Forms.Button();
             this.B_Dex = new System.Windows.Forms.Button();
             this.B_Outbreak = new System.Windows.Forms.Button();
             this.B_MoveShop = new System.Windows.Forms.Button();
@@ -59,6 +57,7 @@
             this.Tab_Future = new System.Windows.Forms.TabPage();
             this.flowLayoutPanel4 = new System.Windows.Forms.FlowLayoutPanel();
             this.B_OpenFolder = new System.Windows.Forms.Button();
+            this.B_EventTriggers = new System.Windows.Forms.Button();
             this.TC_Options.SuspendLayout();
             this.Tab_General.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
@@ -96,7 +95,6 @@
             // flowLayoutPanel1
             // 
             this.flowLayoutPanel1.Controls.Add(this.B_ParsePKMDetails);
-            this.flowLayoutPanel1.Controls.Add(this.B_DumpTrainers);
             this.flowLayoutPanel1.Controls.Add(this.B_Wild);
             this.flowLayoutPanel1.Controls.Add(this.B_Static);
             this.flowLayoutPanel1.Controls.Add(this.B_Gift);
@@ -122,19 +120,9 @@
             this.B_ParsePKMDetails.UseVisualStyleBackColor = true;
             this.B_ParsePKMDetails.Click += new System.EventHandler(this.B_ParsePersonal_Click);
             // 
-            // B_DumpTrainers
-            // 
-            this.B_DumpTrainers.Location = new System.Drawing.Point(132, 3);
-            this.B_DumpTrainers.Name = "B_DumpTrainers";
-            this.B_DumpTrainers.Size = new System.Drawing.Size(123, 55);
-            this.B_DumpTrainers.TabIndex = 2;
-            this.B_DumpTrainers.Text = "Trainers";
-            this.B_DumpTrainers.UseVisualStyleBackColor = true;
-            this.B_DumpTrainers.Click += new System.EventHandler(this.B_DumpTrainers_Click);
-            // 
             // B_Wild
             // 
-            this.B_Wild.Location = new System.Drawing.Point(261, 3);
+            this.B_Wild.Location = new System.Drawing.Point(132, 3);
             this.B_Wild.Name = "B_Wild";
             this.B_Wild.Size = new System.Drawing.Size(123, 55);
             this.B_Wild.TabIndex = 11;
@@ -144,7 +132,7 @@
             // 
             // B_Static
             // 
-            this.B_Static.Location = new System.Drawing.Point(3, 64);
+            this.B_Static.Location = new System.Drawing.Point(261, 3);
             this.B_Static.Name = "B_Static";
             this.B_Static.Size = new System.Drawing.Size(123, 55);
             this.B_Static.TabIndex = 10;
@@ -154,7 +142,7 @@
             // 
             // B_Gift
             // 
-            this.B_Gift.Location = new System.Drawing.Point(132, 64);
+            this.B_Gift.Location = new System.Drawing.Point(3, 64);
             this.B_Gift.Name = "B_Gift";
             this.B_Gift.Size = new System.Drawing.Size(123, 55);
             this.B_Gift.TabIndex = 9;
@@ -164,7 +152,7 @@
             // 
             // B_ItemInfo
             // 
-            this.B_ItemInfo.Location = new System.Drawing.Point(261, 64);
+            this.B_ItemInfo.Location = new System.Drawing.Point(132, 64);
             this.B_ItemInfo.Name = "B_ItemInfo";
             this.B_ItemInfo.Size = new System.Drawing.Size(123, 55);
             this.B_ItemInfo.TabIndex = 6;
@@ -174,7 +162,7 @@
             // 
             // B_Moves
             // 
-            this.B_Moves.Location = new System.Drawing.Point(3, 125);
+            this.B_Moves.Location = new System.Drawing.Point(261, 64);
             this.B_Moves.Name = "B_Moves";
             this.B_Moves.Size = new System.Drawing.Size(123, 55);
             this.B_Moves.TabIndex = 7;
@@ -184,7 +172,7 @@
             // 
             // B_Details
             // 
-            this.B_Details.Location = new System.Drawing.Point(132, 125);
+            this.B_Details.Location = new System.Drawing.Point(3, 125);
             this.B_Details.Name = "B_Details";
             this.B_Details.Size = new System.Drawing.Size(123, 55);
             this.B_Details.TabIndex = 15;
@@ -194,7 +182,7 @@
             // 
             // B_Placement
             // 
-            this.B_Placement.Location = new System.Drawing.Point(261, 125);
+            this.B_Placement.Location = new System.Drawing.Point(132, 125);
             this.B_Placement.Name = "B_Placement";
             this.B_Placement.Size = new System.Drawing.Size(123, 55);
             this.B_Placement.TabIndex = 18;
@@ -204,7 +192,7 @@
             // 
             // B_Resident
             // 
-            this.B_Resident.Location = new System.Drawing.Point(3, 186);
+            this.B_Resident.Location = new System.Drawing.Point(261, 125);
             this.B_Resident.Name = "B_Resident";
             this.B_Resident.Size = new System.Drawing.Size(123, 55);
             this.B_Resident.TabIndex = 19;
@@ -214,7 +202,7 @@
             // 
             // B_DumpDrops
             // 
-            this.B_DumpDrops.Location = new System.Drawing.Point(132, 186);
+            this.B_DumpDrops.Location = new System.Drawing.Point(3, 186);
             this.B_DumpDrops.Name = "B_DumpDrops";
             this.B_DumpDrops.Size = new System.Drawing.Size(123, 55);
             this.B_DumpDrops.TabIndex = 20;
@@ -289,11 +277,11 @@
             // 
             this.flowLayoutPanel3.Controls.Add(this.B_DumpHash);
             this.flowLayoutPanel3.Controls.Add(this.B_FlavorText);
-            this.flowLayoutPanel3.Controls.Add(this.B_EggMove);
             this.flowLayoutPanel3.Controls.Add(this.B_Dex);
             this.flowLayoutPanel3.Controls.Add(this.B_Outbreak);
             this.flowLayoutPanel3.Controls.Add(this.B_MoveShop);
             this.flowLayoutPanel3.Controls.Add(this.B_ScriptCommandNames);
+            this.flowLayoutPanel3.Controls.Add(this.B_EventTriggers);
             this.flowLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel3.Location = new System.Drawing.Point(3, 3);
             this.flowLayoutPanel3.Name = "flowLayoutPanel3";
@@ -320,19 +308,9 @@
             this.B_FlavorText.UseVisualStyleBackColor = true;
             this.B_FlavorText.Click += new System.EventHandler(this.B_FlavorText_Click);
             // 
-            // B_EggMove
-            // 
-            this.B_EggMove.Location = new System.Drawing.Point(261, 3);
-            this.B_EggMove.Name = "B_EggMove";
-            this.B_EggMove.Size = new System.Drawing.Size(123, 55);
-            this.B_EggMove.TabIndex = 17;
-            this.B_EggMove.Text = "Egg Move Entries";
-            this.B_EggMove.UseVisualStyleBackColor = true;
-            this.B_EggMove.Click += new System.EventHandler(this.B_EggMove_Click);
-            // 
             // B_Dex
             // 
-            this.B_Dex.Location = new System.Drawing.Point(3, 64);
+            this.B_Dex.Location = new System.Drawing.Point(261, 3);
             this.B_Dex.Name = "B_Dex";
             this.B_Dex.Size = new System.Drawing.Size(123, 55);
             this.B_Dex.TabIndex = 18;
@@ -342,7 +320,7 @@
             // 
             // B_Outbreak
             // 
-            this.B_Outbreak.Location = new System.Drawing.Point(132, 64);
+            this.B_Outbreak.Location = new System.Drawing.Point(3, 64);
             this.B_Outbreak.Name = "B_Outbreak";
             this.B_Outbreak.Size = new System.Drawing.Size(123, 55);
             this.B_Outbreak.TabIndex = 19;
@@ -352,7 +330,7 @@
             // 
             // B_MoveShop
             // 
-            this.B_MoveShop.Location = new System.Drawing.Point(261, 64);
+            this.B_MoveShop.Location = new System.Drawing.Point(132, 64);
             this.B_MoveShop.Name = "B_MoveShop";
             this.B_MoveShop.Size = new System.Drawing.Size(123, 55);
             this.B_MoveShop.TabIndex = 20;
@@ -362,7 +340,7 @@
             // 
             // B_ScriptCommandNames
             // 
-            this.B_ScriptCommandNames.Location = new System.Drawing.Point(3, 125);
+            this.B_ScriptCommandNames.Location = new System.Drawing.Point(261, 64);
             this.B_ScriptCommandNames.Name = "B_ScriptCommandNames";
             this.B_ScriptCommandNames.Size = new System.Drawing.Size(123, 55);
             this.B_ScriptCommandNames.TabIndex = 21;
@@ -399,6 +377,16 @@
             this.B_OpenFolder.UseVisualStyleBackColor = true;
             this.B_OpenFolder.Click += new System.EventHandler(this.B_OpenFolder_Click);
             // 
+            // B_EventTriggers
+            // 
+            this.B_EventTriggers.Location = new System.Drawing.Point(132, 125);
+            this.B_EventTriggers.Name = "B_EventTriggers";
+            this.B_EventTriggers.Size = new System.Drawing.Size(123, 55);
+            this.B_EventTriggers.TabIndex = 22;
+            this.B_EventTriggers.Text = "Event Triggers";
+            this.B_EventTriggers.UseVisualStyleBackColor = true;
+            this.B_EventTriggers.Click += new System.EventHandler(this.B_EventTriggers_Click);
+            // 
             // DumperPLA
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -428,7 +416,6 @@
         private System.Windows.Forms.TabPage Tab_General;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.Button B_ParsePKMDetails;
-        private System.Windows.Forms.Button B_DumpTrainers;
         private System.Windows.Forms.Button B_ItemInfo;
         private System.Windows.Forms.Button B_Moves;
         private System.Windows.Forms.TabPage Tab_PKHeX;
@@ -443,7 +430,6 @@
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel3;
         private System.Windows.Forms.Button B_DumpHash;
         private System.Windows.Forms.Button B_FlavorText;
-        private System.Windows.Forms.Button B_EggMove;
         private System.Windows.Forms.Button B_OpenFolder;
         private System.Windows.Forms.TabPage Tab_Future;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel4;
@@ -455,5 +441,6 @@
         private System.Windows.Forms.Button B_Placement;
         private System.Windows.Forms.Button B_Resident;
         private System.Windows.Forms.Button B_DumpDrops;
+        private System.Windows.Forms.Button B_EventTriggers;
     }
 }

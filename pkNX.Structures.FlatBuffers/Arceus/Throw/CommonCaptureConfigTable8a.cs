@@ -12,21 +12,21 @@ using FlatSharp.Attributes;
 namespace pkNX.Structures.FlatBuffers;
 
 [FlatBufferTable, TypeConverter(typeof(ExpandableObjectConverter))]
-public class PokemonRare8aTable : IFlatBufferArchive<PokemonRare8aEntry>
+public class CommonCaptureConfigTable8a : IFlatBufferArchive<CommonCaptureConfig8a>
 {
     public byte[] Write() => FlatBufferConverter.SerializeFrom(this);
 
-    [FlatBufferItem(0)] public PokemonRare8aEntry[] Table { get; set; } = Array.Empty<PokemonRare8aEntry>();
+    [FlatBufferItem(0)] public CommonCaptureConfig8a[] Table { get; set; } = Array.Empty<CommonCaptureConfig8a>();
 }
 
 [FlatBufferTable, TypeConverter(typeof(ExpandableObjectConverter))]
-public class PokemonRare8aEntry
+public class CommonCaptureConfig8a
 {
     [FlatBufferItem(00)] public string Name { get; set; } = string.Empty;
     [FlatBufferItem(01)] public ulong Hash { get; set; }
-    [FlatBufferItem(02)] public byte UnusedValue { get; set; } // none have this
-    [FlatBufferItem(03)] public string Option { get; set; } = string.Empty;
-    [FlatBufferItem(04)] public string Value { get; set; } = string.Empty;
-    [FlatBufferItem(05)] public string[] Field_05 { get; set; } = Array.Empty<string>();
-    [FlatBufferItem(06)] public FlatDummyEntry[] UnusedArray { get; set; } = Array.Empty<FlatDummyEntry>(); // none have this
+    [FlatBufferItem(02)] public int Type { get; set; }
+    [FlatBufferItem(03)] public string String_03 { get; set; } = string.Empty;
+    [FlatBufferItem(04)] public string String_04 { get; set; } = string.Empty;
+    [FlatBufferItem(05)] public string[] String_05 { get; set; } = Array.Empty<string>();
+    [FlatBufferItem(06)] public string[] String_06 { get; set; } = Array.Empty<string>();
 }
