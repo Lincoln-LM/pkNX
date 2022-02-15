@@ -311,7 +311,7 @@ namespace pkNX.Structures.FlatBuffers
         private static void FillSlots(IEnumerable<EncounterSlot8a> arr, EncounterMultiplerArchive8a multArchive, List<EncounterDetail8a>[,] dividedTables)
         {
             var ctr = 0;
-            foreach (var slot in arr.OrderByDescending(sl => sl.BaseProbability))
+            foreach (var slot in arr)
             {
                 var defaults = multArchive.GetEncounterMultiplier(slot);
                 for (var time = 0; time < dividedTables.GetLength(0); time++)
