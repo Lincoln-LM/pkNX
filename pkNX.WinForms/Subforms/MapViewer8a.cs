@@ -5,33 +5,33 @@ using System.Linq;
 using System.Windows.Forms;
 using pkNX.Containers;
 using pkNX.Game;
-using pkNX.Structures;
 using pkNX.Structures.FlatBuffers;
 
 namespace pkNX.WinForms.Subforms
 {
     public partial class MapViewer8a : Form
     {
-        private readonly GameManager ROM;
+        private readonly GameManagerPLA ROM;
         private readonly GFPack Resident;
+        private readonly AreaSettingsTable8a Settings;
 
         public readonly AreaInstance8a[] Areas;
         private readonly bool Loading = true;
 
-        public MapViewer8a(GameManager rom, GFPack resident)
+        public MapViewer8a(GameManagerPLA rom, GFPack resident)
         {
             ROM = rom;
             Resident = resident;
+            var bin_settings = resident.GetDataFullPath("bin/field/resident/AreaSettings.bin");
+            Settings = FlatBufferConverter.DeserializeFrom<AreaSettingsTable8a>(bin_settings);
+
             InitializeComponent();
 
-            var pd = ROM.GetFile(GameFile.PersonalStats)[0];
-            var po = FlatBufferConverter.DeserializeFrom<PersonalTableLA>(pd);
-            var test = PersonalConverter.FromArceus(po);
-            var pt = new PersonalTable(test, 905);
-            Areas = PLAInfo.AreaNames.Select(z => AreaInstance8a.Create(Resident, z)).ToArray();
+            Areas = ResidentAreaSet.AreaNames.Select(z => AreaInstance8a.Create(Resident, z, Settings)).ToArray();
             var speciesNames = ROM.GetStrings(TextName.SpeciesNames);
             CB_Map.Items.AddRange(Areas.Select(z => z.ParentArea?.AreaName ?? z.AreaName).ToArray());
 
+            var pt = rom.Data.PersonalData;
             var nameList = new List<ComboItem>();
             foreach (var e in pt.Table.OfType<PersonalInfoLA>())
             {
@@ -53,7 +53,8 @@ namespace pkNX.WinForms.Subforms
             Loading = false;
             CB_Map.SelectedIndex = 0;
         }
-        public class ComboItem
+
+        private class ComboItem
         {
             public ComboItem(string text, int value)
             {
@@ -137,7 +138,7 @@ namespace pkNX.WinForms.Subforms
             foreach (var s in area.Spawners.Concat(area.SubAreas.SelectMany(z => z.Spawners)))
             {
                 var table = s.Field_20_Value.EncounterTableID;
-                var slots = Array.Find(area.Encounters.Table, z => z.TableID == table);
+                var slots = Array.Find(area.Encounters, z => z.TableID == table);
                 if (slots == null)
                     continue;
 
@@ -150,7 +151,7 @@ namespace pkNX.WinForms.Subforms
             foreach (var s in area.Wormholes.Concat(area.SubAreas.SelectMany(z => z.Wormholes)))
             {
                 var table = s.Field_20_Value.EncounterTableID;
-                var slots = Array.Find(area.Encounters.Table, z => z.TableID == table);
+                var slots = Array.Find(area.Encounters, z => z.TableID == table);
                 if (slots == null)
                     continue;
 
@@ -168,7 +169,7 @@ namespace pkNX.WinForms.Subforms
                     if (l.LandmarkItemSpawnTableID != table)
                         continue;
                     var st = l.EncounterTableID;
-                    var slots = Array.Find(area.Encounters.Table, z => z.TableID == st);
+                    var slots = Array.Find(area.Encounters, z => z.TableID == st);
                     if (slots == null)
                         continue;
 

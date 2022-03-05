@@ -98,6 +98,7 @@ namespace pkNX.Containers
         }
 
         public int GetIndexFull(ulong hash) => Array.FindIndex(HashAbsolute, z => z.HashFnv1aPathFull == hash);
+        public int GetIndexFull(string path) => GetIndexFull(FnvHash.HashFnv1a_64(path));
 
         public int GetIndexFileName(ulong hash)
         {
@@ -134,6 +135,13 @@ namespace pkNX.Containers
         public void SetDataFileName(string name, byte[] data)
         {
             int index = GetIndexFileName(name);
+            DecompressedFiles[index] = data;
+        }
+
+        public void SetDataFullPath(string path, byte[] data)
+        {
+            var hash = FnvHash.HashFnv1a_64(path);
+            int index = GetIndexFull(hash);
             DecompressedFiles[index] = data;
         }
 

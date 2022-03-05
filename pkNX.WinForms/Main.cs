@@ -112,9 +112,7 @@ namespace pkNX.WinForms
                 else
                     OpenFile(path);
             }
-#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
             {
                 WinFormsUtil.Error($"Failed to open -- {path}", ex.Message);
             }
@@ -139,20 +137,17 @@ namespace pkNX.WinForms
             if (editor == null)
             {
                 WinFormsUtil.Alert("Invalid folder loaded." + Environment.NewLine + "Unable to recognize game data.", path);
+                return;
             }
-            else
+
+            try
             {
-                try
-                {
-                    editor.Initialize();
-                    LoadROM(editor);
-                }
-#pragma warning disable CA1031 // Do not catch general exception types
-                catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-                {
-                    WinFormsUtil.Error("Failed to initialize ROM data." + Environment.NewLine + "Please ensure your dump is correctly set up, with updated patches merged in (if applicable).", ex.Message, ex.StackTrace);
-                }
+                editor.Initialize();
+                LoadROM(editor);
+            }
+            catch (Exception ex)
+            {
+                WinFormsUtil.Error("Failed to initialize ROM data." + Environment.NewLine + "Please ensure your dump is correctly set up, with updated patches merged in (if applicable).", ex.Message, ex.StackTrace);
             }
         }
 

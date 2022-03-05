@@ -10,6 +10,7 @@ namespace pkNX.Randomization
     /// Settings for what Species are permitted during randomization.
     /// </summary>
     [Serializable]
+    [TypeConverter(typeof(ExpandableObjectConverter))]
     public class SpeciesSettings : RandSettings
     {
         private const string General = nameof(General);
@@ -212,6 +213,12 @@ namespace pkNX.Randomization
                 list.AddRange(Enumerable.Range(894, 5)); // Regieleki, Regidrago, Glastrier, Spectrier, Calyrex
             }
             if (Events) list.Add(893); // Zarude
+
+            if (maxSpecies >= Legal.MaxSpeciesID_8a)
+            {
+                list.AddRange(Enumerable.Range(899, 6)); // Wyrdeer - Overqwil
+                if (Legends) list.Add(905); // Enamorus
+            }
         }
 
         private static void AddGGEvents(List<int> list)

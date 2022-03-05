@@ -9,12 +9,14 @@ using pkNX.Randomization;
 using pkNX.Structures;
 using pkNX.Structures.FlatBuffers;
 using pkNX.WinForms.Subforms;
+using static pkNX.Structures.Species;
 
 namespace pkNX.WinForms.Controls;
 
 internal class EditorPLA : EditorBase
 {
-    protected internal EditorPLA(GameManager rom) : base(rom) => CheckOodleDllPresence();
+    private GameData8a Data => ((GameManagerPLA)ROM).Data;
+    protected internal EditorPLA(GameManagerPLA rom) : base(rom) => CheckOodleDllPresence();
 
     private static void CheckOodleDllPresence()
     {
@@ -49,13 +51,53 @@ internal class EditorPLA : EditorBase
 
     public void EditTrainers()
     {
-        var folder = ROM.GetFilteredFolder(GameFile.TrainerData).FilePath;
-        var files = Directory.GetFiles(folder);
-        var data = files.Select(FlatBufferConverter.DeserializeFrom<TrData8a>).ToArray();
-        var names = files.Select(Path.GetFileNameWithoutExtension).ToArray();
-        var cache = new DataCache<TrData8a>(data);
-        using var form = new GenericEditor<TrData8a>(cache, names, "Trainers", canSave: false);
+        var folder = ROM.GetFilteredFolder(GameFile.TrainerData);
+        var cache = new DataCache<TrData8a>(folder)
+        {
+            Create = FlatBufferConverter.DeserializeFrom<TrData8a>,
+            Write = FlatBufferConverter.SerializeFrom,
+        };
+        var names = folder.GetPaths().Select(Path.GetFileNameWithoutExtension).ToArray();
+        using var form = new GenericEditor<TrData8a>(cache, names, "Trainers", Randomize, canSave: true);
         form.ShowDialog();
+
+        void Randomize()
+        {
+            var settings = EditUtil.Settings.Species;
+            var rand = new SpeciesRandomizer(ROM.Info, Data.PersonalData);
+            rand.Initialize(settings, GetSpeciesBanlist());
+
+            for (int i = 0; i < cache.Length; i++)
+            {
+                foreach (var t in cache[i].Team)
+                {
+                    t.Species = rand.GetRandomSpecies(t.Species);
+                    t.Form = GetRandomForm(t.Species);
+                    t.Gender = (int)FixedGender.Random;
+                    t.Nature = NatureType8a.Random;
+                    t.Move_01.Move = t.Move_02.Move = t.Move_03.Move = t.Move_04.Move = 0;
+                    t.Move_01.Mastered = t.Move_02.Mastered = t.Move_03.Mastered = t.Move_04.Mastered = true;
+                    t.Shiny = Randomization.Util.Random.Next(0, 100 + 1) < 3;
+                    t.IsOybn = Randomization.Util.Random.Next(0, 100 + 1) < 3;
+                }
+            }
+        }
+
+        if (!form.Modified)
+            cache.CancelEdits();
+        else
+            cache.Save();
+    }
+
+    public void EditMoveShop()
+    {
+        var names = ROM.GetStrings(TextName.MoveNames);
+        var data = ROM.GetFile(GameFile.MoveShop);
+        var obj = FlatBufferConverter.DeserializeFrom<MoveShopTable8a>(data[0]);
+        var result = PopFlat(obj.Table, "Move Shop Editor", z => names[z.Move]);
+        if (!result)
+            return;
+        data[0] = FlatBufferConverter.SerializeFrom(obj);
     }
 
     public void PopFlat<T1, T2>(GameFile file, string title, Func<T2, string> getName, Action? rand = null, bool canSave = true) where T1 : class, IFlatBufferArchive<T2> where T2 : class
@@ -106,13 +148,40 @@ internal class EditorPLA : EditorBase
 
     public void EditHa_Shop_Data()
     {
-        var itemNames = ROM.GetStrings(TextName.ItemNames);
-        PopFlat<HaShopTable8a, HaShopItem8a>(GameFile.HaShop, "ha_shop_data Editor", z => itemNames[z.ItemID]);
+        var names = ROM.GetStrings(TextName.ItemNames);
+        var data = ROM.GetFile(GameFile.HaShop);
+        var obj = FlatBufferConverter.DeserializeFrom<HaShopTable8a>(data[0]);
+        var result = PopFlat(obj.Table, "ha_shop_data Editor", z => names[z.ItemID], Randomize);
+        if (!result)
+            return;
+
+        void Randomize()
+        {
+            foreach (var t in obj.Table)
+            {
+                if (Legal.Pouch_Recipe_LA.Contains((ushort)t.ItemID)) // preserve recipes
+                    continue;
+                t.ItemID = Legal.Pouch_Items_LA[Randomization.Util.Random.Next(Legal.Pouch_Items_LA.Length)];
+            }
+        }
+
+        data[0] = FlatBufferConverter.SerializeFrom(obj);
     }
 
     public void EditApp_Config_List()
     {
         PopFlat<AppConfigList8a, AppconfigEntry8a>(GameFile.AppConfigList, "App Config List", z => z.OriginalPath);
+    }
+
+    public void EditArea_Weather()
+    {
+        var gfp = (GFPack)ROM.GetFile(GameFile.Resident);
+        var data = gfp[2065];
+        var obj = FlatBufferConverter.DeserializeFrom<AreaWeatherTable8a>(data);
+        var result = PopFlat(obj.Table, "Area Weather Editor", z => z.Hash.ToString("X16"));
+        if (!result)
+            return;
+        gfp[2065] = FlatBufferConverter.SerializeFrom(obj);
     }
 
     public void EditStatic()
@@ -131,36 +200,38 @@ internal class EditorPLA : EditorBase
             if (z.Table is not { Length: not 0 } x)
                 return "No Entries";
             var s = x[0];
-            return $"{names[s.Species]}{(s.Form == 0 ? "" : $"-{s.Form}")} @ lv {s.Level}";
+            return $"{names[s.Species]}{(s.Form == 0 ? "" : $"-{s.Form}")} @ Lv. {s.Level}";
         }
 
         void Randomize(IEnumerable<EventEncount8a> arr)
         {
-            var pt = ROM.Data.PersonalData;
-            int[] ban = pt.Table.Take(ROM.Info.MaxSpeciesID + 1)
-                .Select((z, i) => new { Species = i, Present = ((PersonalInfoLA)z).IsPresentInGame })
-                .Where(z => !z.Present).Select(z => z.Species).ToArray();
-
-            var spec = EditUtil.Settings.Species;
-            var srand = new SpeciesRandomizer(ROM.Info, ROM.Data.PersonalData);
-            var frand = new FormRandomizer(ROM.Data.PersonalData);
-            srand.Initialize(spec, ban);
+            var settings = EditUtil.Settings.Species;
+            var rand = new SpeciesRandomizer(ROM.Info, Data.PersonalData);
+            settings.Legends = false;
+            rand.Initialize(settings, GetSpeciesBanlist());
             foreach (var entry in arr)
             {
                 if (entry.Table is not { Length: > 0 } x)
                     continue;
-                var t = x[0];
-                if (t.Form != 0 || t.Species is (int)Species.Arceus) // Keep boss battles same?
-                    continue;
-                t.Species = srand.GetRandomSpecies(t.Species);
-                t.Form = (byte)frand.GetRandomForme(t.Species, false, false, true, true, ROM.Data.PersonalData.Table);
-                t.Nature = (int)Nature.Serious;
-                t.Gender = (int)FixedGender.Random;
-                t.ShinyLock = ShinyType8a.Random;
-                t.Move1 = t.Move2 = t.Move3 = t.Move4 = 0;
-                t.Mastered1 = t.Mastered2 = t.Mastered3 = t.Mastered4 = true;
-                t.IV_HP = t.IV_ATK = t.IV_DEF = t.IV_SPA = t.IV_SPD = t.IV_SPE = 31;
-                t.GV_HP = t.GV_ATK = t.GV_DEF = t.GV_SPA = t.GV_SPD = t.GV_SPE = 31;
+                foreach (var t in x)
+                {
+                    bool isBoss = t.Species is (int)Kleavor or (int)Lilligant or (int)Arcanine or (int)Electrode or (int)Avalugg or (int)Arceus;
+                    if (isBoss) // don't randomize boss battles
+                        continue;
+                    if (Legal.Legendary_8a.Contains(t.Species)) // don't randomize legendaries
+                        continue;
+
+                    t.Species = rand.GetRandomSpecies(t.Species);
+                    t.Form = (byte)GetRandomForm(t.Species);
+                    t.Nature = (int)Nature.Random;
+                    t.Gender = (int)FixedGender.Random;
+                    t.ShinyLock = ShinyType8a.Random;
+                    t.Move1 = t.Move2 = t.Move3 = t.Move4 = 0;
+                    t.Mastered1 = t.Mastered2 = t.Mastered3 = t.Mastered4 = true;
+                    t.IV_HP = t.IV_ATK = t.IV_DEF = t.IV_SPA = t.IV_SPD = t.IV_SPE = 31;
+                    t.GV_HP = t.GV_ATK = t.GV_DEF = t.GV_SPA = t.GV_SPD = t.GV_SPE = 10;
+                    t.Height = t.Weight = -1;
+                }
             }
         }
     }
@@ -172,33 +243,70 @@ internal class EditorPLA : EditorBase
         var data = obj[0];
         var root = FlatBufferConverter.DeserializeFrom<PokeAdd8aArchive>(data);
         var entries = root.Table;
-        var result = PopFlat(entries, "Gift Encounter Editor", z => $"{names[z.Species]} @ lv {z.Level}", () => Randomize(entries));
+        var result = PopFlat(entries, "Gift Encounter Editor", z => $"{names[z.Species]}{(z.Form == 0 ? "" : $"-{z.Form}")} @ Lv. {z.Level}", () => Randomize(entries));
         if (result)
             obj[0] = FlatBufferConverter.SerializeFrom(root);
 
         void Randomize(IEnumerable<PokeAdd8a> arr)
         {
-            var pt = ROM.Data.PersonalData;
-            int[] ban = pt.Table.Take(ROM.Info.MaxSpeciesID + 1)
-                .Select((z, i) => new { Species = i, Present = ((PersonalInfoLA)z).IsPresentInGame })
-                .Where(z => !z.Present).Select(z => z.Species).ToArray();
-
-            var spec = EditUtil.Settings.Species;
-            var srand = new SpeciesRandomizer(ROM.Info, ROM.Data.PersonalData);
-            var frand = new FormRandomizer(ROM.Data.PersonalData);
-            srand.Initialize(spec, ban);
+            var settings = EditUtil.Settings.Species;
+            var rand = new SpeciesRandomizer(ROM.Info, Data.PersonalData);
+            settings.Legends = false;
+            rand.Initialize(settings, GetSpeciesBanlist());
             foreach (var t in arr)
             {
-                if (t.Form != 0 || t.Species is (int)Species.Arceus) // Keep boss battles same?
-                    continue;
-                t.Species = srand.GetRandomSpecies(t.Species);
-                t.Form = (byte)frand.GetRandomForme(t.Species, false, false, true, true, ROM.Data.PersonalData.Table);
+                t.Species = rand.GetRandomSpecies(t.Species);
+                t.Form = (byte)GetRandomForm(t.Species);
                 t.Nature = NatureType8a.Random;
                 t.Gender = (int)FixedGender.Random;
                 t.ShinyLock = ShinyType8a.Random;
+                t.Ball = Randomization.Util.Random.Next(27, 37); // [Strange, Origin]
                 t.Move1 = t.Move2 = t.Move3 = t.Move4 = 0;
+                t.Height = t.Weight = -1;
             }
         }
+    }
+
+    public int[] GetSpeciesBanlist()
+    {
+        var pt = Data.PersonalData;
+        var hasForm = new HashSet<int>();
+        var banned = new HashSet<int>();
+        foreach (var pi in pt.Table.Cast<PersonalInfoLA>())
+        {
+            if (pi.IsPresentInGame)
+            {
+                banned.Remove(pi.Species);
+                hasForm.Add(pi.Species);
+            }
+            else if (!hasForm.Contains(pi.Species))
+            {
+                banned.Add(pi.Species);
+            }
+        }
+        return banned.ToArray();
+    }
+
+    public int GetRandomForm(int spec)
+    {
+        var pt = Data.PersonalData;
+        var formRand = pt.Table
+            .Cast<PersonalInfoLA>()
+            .Where(z => z.IsPresentInGame && !(Legal.BattleExclusiveForms.Contains(z.Species) || Legal.BattleFusions.Contains(z.Species)))
+            .GroupBy(z => z.Species)
+            .ToDictionary(z => z.Key, z => z.ToList());
+
+        if (!formRand.TryGetValue(spec, out var entries))
+            return 0;
+        var count = entries.Count;
+
+        return (Species)spec switch
+        {
+            Growlithe or Arcanine or Voltorb or Electrode or Typhlosion or Qwilfish or Samurott or Lilligant or Zorua or Zoroark or Braviary or Sliggoo or Goodra or Avalugg or Decidueye => 1,
+            Basculin => 2,
+            Kleavor => 0,
+            _ => Randomization.Util.Random.Next(0, count),
+        };
     }
 
     public void EditPersonal_Raw()
@@ -221,9 +329,14 @@ internal class EditorPLA : EditorBase
 
     public void EditSpawns()
     {
-        var residentpak = ROM.GetFile(GameFile.Resident)[0];
-        var resident = new GFPack(residentpak);
-        using var form = new MapViewer8a(ROM, resident);
+        var resident = (GFPack)ROM.GetFile(GameFile.Resident);
+        using var form = new MapViewer8a((GameManagerPLA)ROM, resident);
+        form.ShowDialog();
+    }
+
+    public void EditAreas()
+    {
+        using var form = new AreaEditor8a((GameManagerPLA)ROM);
         form.ShowDialog();
     }
 
@@ -244,7 +357,7 @@ internal class EditorPLA : EditorBase
         }
 
         cache.Save();
-        ROM.Data.MoveData.ClearAll(); // force reload if used again
+        Data.MoveData.ClearAll(); // force reload if used again
     }
 
     public void EditItems()
@@ -294,14 +407,24 @@ internal class EditorPLA : EditorBase
     public void EditSize_Scale_Config() => PopFlatConfig(GameFile.SizeScaleConfig, "Size Scale Config Editor");
 
     public void EditOutbreakDetail()
-    {
-        PopFlat<MassOutbreakTable8a, MassOutbreak8a>(GameFile.Outbreak, "Outbreak Proc Editor", z => z.WorkValueName);
-    }
+        => PopFlat<MassOutbreakTable8a, MassOutbreak8a>(GameFile.Outbreak, "Outbreak Proc Editor", z => z.WorkValueName);
+
+    public void EditNewOutbreak_Group()
+        => PopFlat<NewHugeOutbreakGroupArchive8a, NewHugeOutbreakGroup8a>(GameFile.NewHugeGroup, "New Outbreak Group Editor", z => z.Group.ToString("X16"));
+
+    public void EditNewOutbreak_GroupLottery()
+        => PopFlat<NewHugeOutbreakGroupLotteryArchive8a, NewHugeOutbreakGroupLottery8a>(GameFile.NewHugeGroupLottery, "New Outbreak Group Lottery Editor", z => z.LotteryGroup.ToString("X16"));
+
+    public void EditNewOutbreak_Lottery()
+        => PopFlat<NewHugeOutbreakLotteryArchive8a, NewHugeOutbreakLottery8a>(GameFile.NewHugeLottery, "New Outbreak Lottery Editor", z => z.LotteryGroupString);
+
+    public void EditNewOutbreak_TimeLimit()
+        => PopFlat<NewHugeOutbreakTimeLimitArchive8a, NewHugeOutbreakTimeLimit8a>(GameFile.NewHugeTimeLimit, "New Outbreak Time Limit Editor", z => z.Duration.ToString());
 
     public void EditSymbolBehave()
     {
         var names = ROM.GetStrings(TextName.SpeciesNames);
-        PopFlat<PokeAIArchive8a, PokeAI8a>(GameFile.SymbolBehave, "Symbol Behavior Editor",             z => $"{names[z.Species]}{(z.Form != 0 ? $"-{z.Form}" : "")}", canSave: false);
+        PopFlat<PokeAIArchive8a, PokeAI8a>(GameFile.SymbolBehave, "Symbol Behavior Editor", z => $"{names[z.Species]}{(z.Form != 0 ? $"-{z.Form}" : "")}");
     }
 
     public void EditMasterDump()
